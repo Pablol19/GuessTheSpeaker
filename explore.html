@@ -15,7 +15,7 @@
         rel="stylesheet" />
 </head>
 
-<body>
+<body class="explore-page">
     <div class="bg-orb orb-a"></div>
     <div class="bg-orb orb-b"></div>
 
@@ -26,7 +26,7 @@
         </a>
         <nav class="nav">
             <a href="index.html#daily">Partida diaria</a>
-            <a href="explore.html">Jugar</a>
+            <a href="explore.html" class="is-active">Jugar</a>
             <a href="estadisticas.html">Estadisticas</a>
         </nav>
         <div class="topbar-actions">
@@ -91,11 +91,23 @@
         <ul id="friends-list" class="history-list"></ul>
     </aside>
     <div id="social-backdrop" class="social-backdrop" hidden></div>
+    <main class="explore-main">
+        <section class="ex-hero" aria-labelledby="explore-title">
+            <div class="ex-hero-copy">
+                <span class="ex-kicker">PRÁCTICA</span>
+                <h1 id="explore-title">Elige un duelo y entra en ritmo.</h1>
+                <p class="ex-hero-text">Modos rápidos, visuales más potentes y un espacio pensado para practicar sin quitarle foco a tu partida diaria.</p>
+            </div>
+            <div class="ex-hero-aside" aria-hidden="true">
+                <span class="ex-chip">Rondas cortas</span>
+                <span class="ex-chip">Categorías curadas</span>
+                <span class="ex-chip">Energía daily</span>
+            </div>
+        </section>
 
-
-
-    <main id="explore-grid" class="ex-grid">
-        <!-- Rendered by JS -->
+        <section id="explore-grid" class="ex-grid" aria-label="Lista de modos">
+            <!-- Rendered by JS -->
+        </section>
     </main>
 
 

@@ -43,6 +43,12 @@ const QUIZ_CATALOG = {
   ]
 };
 
+const EXPLORE_CATEGORY_COPY = {
+  politics: "Choques de ego, poder y frases imposibles de ignorar.",
+  tech: "Magnates, visionarios y referencias que rozan la ciencia ficcion.",
+  music: "Iconos con voz propia, niveles cortos y ritmo mas directo."
+};
+
 // Derived flat lookup for backward compatibility
 const QUIZ_CONFIGS = {};
 const QUIZ_GROUPS = {};
@@ -2057,11 +2063,9 @@ function renderExplorePanel() {
   if (!exploreGrid) return;
 
   const playerLevel = getLevelInfo(appState.profile.xp).level;
-  let globalIndex = 0;
 
   exploreGrid.innerHTML = QUIZ_CATALOG.categories.map(cat => {
     const cards = cat.quizzes.map(q => {
-      globalIndex++;
       const unlocked = isQuizUnlocked(q, playerLevel);
       const isDaily = q.id === appState.quizId;
       const lockTag = q.free ? 'GRATIS' : (unlocked ? 'DESBLOQUEADO' : `\uD83D\uDD12 Lv.${q.unlockLevel || '?'}`);
@@ -2074,7 +2078,7 @@ function renderExplorePanel() {
           </div>
           ${isDaily ? '<span class="card-daily-badge">HOY</span>' : ''}
           <div class="card-content">
-            ${q.image ? '' : `<h4 class="card-label">${q.label}</h4>`}
+            <h4 class="card-label">${q.label}</h4>
             <span class="card-tag ${tagClass}">${lockTag}</span>
           </div>
         </button>
@@ -2083,7 +2087,14 @@ function renderExplorePanel() {
 
     return `
       <div class="ex-category">
-        <h3 class="ex-cat-title">${cat.name}</h3>
+        <div class="ex-category-head">
+          <div>
+            <span class="ex-cat-kicker">Coleccion</span>
+            <h3 class="ex-cat-title">${cat.name}</h3>
+            <p class="ex-cat-subtitle">${EXPLORE_CATEGORY_COPY[cat.id] || 'Duelo rapido para practicar y explorar nuevas voces.'}</p>
+          </div>
+          <span class="ex-cat-count">${cat.quizzes.length} modo${cat.quizzes.length === 1 ? '' : 's'}</span>
+        </div>
         <div class="ex-row">${cards}</div>
       </div>
     `;
@@ -2407,14 +2418,27 @@ function renderFriendsList() {
   if (!friendsListNode) return;
   const friends = Array.isArray(appState.profile.friends) ? appState.profile.friends : [];
   if (!friends.length) {
-    friendsListNode.innerHTML = '<li><span>Sin amigos aun.</span><span class="date">Agrega para ranking social.</span></li>';
+    friendsListNode.innerHTML = `
+      <li class="friend-card is-empty">
+        <span class="friend-name">Sin amigos aun.</span>
+        <span class="friend-meta">Agrega para ranking social.</span>
+      </li>
+    `;
     return;
   }
 
   friendsListNode.innerHTML = friends
     .map(
       (name, index) =>
-        `<li><span>${name}</span><button class="btn btn-outline" data-remove-friend="${index}" type="button">Quitar</button></li>`
+        `
+          <li class="friend-card">
+            <div class="friend-copy">
+              <span class="friend-name">${name}</span>
+              <span class="friend-meta">Disponible para comparar ranking.</span>
+            </div>
+            <button class="btn btn-outline" data-remove-friend="${index}" type="button">Quitar</button>
+          </li>
+        `
     )
     .join("");
 
