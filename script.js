@@ -238,6 +238,9 @@ const socialToggleButton = document.querySelector("#social-toggle");
 const socialCloseButton = document.querySelector("#social-close");
 const socialDrawer = document.querySelector("#social-drawer");
 const socialBackdrop = document.querySelector("#social-backdrop");
+const profileAvatarButton = document.querySelector("#profile-avatar-btn");
+const profileDrawer = document.querySelector("#profile-dropdown");
+const profileCloseButton = document.querySelector("#profile-close");
 const friendNameInput = document.querySelector("#friend-name-input");
 const friendAddButton = document.querySelector("#friend-add");
 const friendsListNode = document.querySelector("#friends-list");
@@ -1924,9 +1927,9 @@ function renderWeeklySummary() {
 
   if (!last7.length) {
     weeklySummaryNode.innerHTML = `
-      <div style="font-size: 1.1rem; line-height: 1.6; color: var(--ink);">
-        Completa partidas para activar tu reporte automatico.<br/>
-        <strong>Reto: ${challenge.title}</strong> - ${challenge.description}
+      <div class="stats-brief-copy">
+        <p class="stats-brief-lead">Completa partidas para activar tu reporte automatico.</p>
+        <p class="stats-brief-meta"><strong>Reto:</strong> ${challenge.title} · ${challenge.description}</p>
       </div>
     `;
     return;
@@ -1936,10 +1939,10 @@ function renderWeeklySummary() {
   const best = last7.reduce((acc, item) => (item.score > acc.score ? item : acc), last7[0]);
   const xpSum = last7.reduce((acc, item) => acc + (item.xpGained || 0), 0);
   weeklySummaryNode.innerHTML = `
-    <div style="font-size: 1.1rem; line-height: 1.6; color: var(--ink);">
-      Precisión media: <strong style="color: #6366f1;">${avg}%</strong> &nbsp;·&nbsp; Mejor día: <strong style="color: #6366f1;">${best.score}/${best.total}</strong><br/>
-      <strong>Reto: ${challenge.title}</strong> - ${challenge.description}<br/>
-      Estado: <strong style="color: ${challengeState.done ? '#10b981' : '#f59e0b'};">${challengeState.done ? "Completado" : "En progreso"}</strong> <span style="font-size: 0.95rem; color: var(--ink-soft);">(${challengeState.progress})</span>
+    <div class="stats-brief-copy">
+      <p class="stats-brief-lead">Precision media <strong>${avg}%</strong> · Mejor dia <strong>${best.score}/${best.total}</strong> · XP semanal <strong>${xpSum}</strong></p>
+      <p class="stats-brief-meta"><strong>Reto:</strong> ${challenge.title} · ${challenge.description}</p>
+      <p class="stats-brief-state ${challengeState.done ? "is-done" : "is-progress"}">Estado: <strong>${challengeState.done ? "Completado" : "En progreso"}</strong> <span>(${challengeState.progress})</span></p>
     </div>
   `;
 }
@@ -1961,11 +1964,11 @@ function renderPersonalRecords() {
     const profile = loadProfileForQuiz(quizId);
     const history = profile.history || [];
     if (!history.length) {
-      return `<tr><td>${config.label}</td><td>--</td><td>--</td><td>${profile.streakBest || 0}</td></tr>`;
+      return `<tr><td><span class="record-quiz-name">${config.label}</span></td><td>--</td><td>--</td><td><span class="record-streak-pill">${profile.streakBest || 0}</span></td></tr>`;
     }
     const bestScore = history.reduce((acc, item) => (item.score > acc.score ? item : acc), history[0]);
     const bestTime = history.reduce((acc, item) => (item.durationSec < acc.durationSec ? item : acc), history[0]);
-    return `<tr><td>${config.label}</td><td>${bestScore.score}/${bestScore.total}</td><td>${formatSeconds(bestTime.durationSec)}</td><td>${profile.streakBest || 0}</td></tr>`;
+    return `<tr><td><span class="record-quiz-name">${config.label}</span></td><td><strong>${bestScore.score}/${bestScore.total}</strong></td><td>${formatSeconds(bestTime.durationSec)}</td><td><span class="record-streak-pill">${profile.streakBest || 0}</span></td></tr>`;
   });
   personalRecordsNode.innerHTML = rows.join("");
 }
@@ -2029,7 +2032,7 @@ function renderTrendChart() {
 function renderHistory() {
   if (!historyList) return;
   if (!appState.profile.history.length) {
-    historyList.innerHTML = '<li><span>No hay partidas aun.</span><span class="date">Hoy puede ser la primera.</span></li>';
+    historyList.innerHTML = '<li class="history-entry is-empty"><span>No hay partidas aun.</span><span class="date">Hoy puede ser la primera.</span></li>';
     renderWeeklySummary();
     renderUxSummary();
     renderConsistencyHeatmap();
@@ -2044,7 +2047,7 @@ function renderHistory() {
 
   historyList.innerHTML = appState.profile.history
     .slice(0, 12)
-    .map((entry) => `<li><span><strong>${entry.score}/${entry.total}</strong> (${entry.percent}%)</span><span class="date">${formatDate(entry.date)}</span></li>`)
+    .map((entry) => `<li class="history-entry"><span class="history-entry-score"><strong>${entry.score}/${entry.total}</strong> <em>${entry.percent}%</em></span><span class="date">${formatDate(entry.date)}</span></li>`)
     .join("");
 
   renderWeeklySummary();
@@ -2371,25 +2374,22 @@ function initProfileDropdown() {
     });
   }
 
-  const avatarBtn = document.querySelector("#profile-avatar-btn");
-  const dropdown = document.querySelector("#profile-dropdown");
+  const avatarBtn = profileAvatarButton;
+  const dropdown = profileDrawer;
   if (!avatarBtn || !dropdown) return;
 
   avatarBtn.addEventListener("click", (e) => {
     e.stopPropagation();
-    const isOpen = dropdown.classList.toggle("is-open");
-    avatarBtn.setAttribute("aria-expanded", String(isOpen));
-    dropdown.setAttribute("aria-hidden", String(!isOpen));
+    if (dropdown.classList.contains("is-open")) {
+      closeProfileDrawer();
+      return;
+    }
+    openProfileDrawer();
   });
 
-  // Close on click outside
-  document.addEventListener("click", (e) => {
-    if (!dropdown.contains(e.target) && e.target !== avatarBtn) {
-      dropdown.classList.remove("is-open");
-      avatarBtn.setAttribute("aria-expanded", "false");
-      dropdown.setAttribute("aria-hidden", "true");
-    }
-  });
+  if (profileCloseButton) {
+    profileCloseButton.addEventListener("click", closeProfileDrawer);
+  }
 }
 
 function initTopThemeControl() {
@@ -2456,6 +2456,11 @@ function renderFriendsList() {
 
 function openSocialDrawer() {
   if (!socialDrawer) return;
+  if (socialDrawer.classList.contains("is-open")) {
+    closeSocialDrawer();
+    return;
+  }
+  closeProfileDrawer();
   socialDrawer.classList.add("is-open");
   socialDrawer.setAttribute("aria-hidden", "false");
   if (socialBackdrop) socialBackdrop.hidden = false;
@@ -2465,7 +2470,31 @@ function closeSocialDrawer() {
   if (!socialDrawer) return;
   socialDrawer.classList.remove("is-open");
   socialDrawer.setAttribute("aria-hidden", "true");
-  if (socialBackdrop) socialBackdrop.hidden = true;
+  syncSharedBackdrop();
+}
+
+function openProfileDrawer() {
+  if (!profileDrawer) return;
+  closeSocialDrawer();
+  profileDrawer.classList.add("is-open");
+  profileDrawer.setAttribute("aria-hidden", "false");
+  if (profileAvatarButton) profileAvatarButton.setAttribute("aria-expanded", "true");
+  if (socialBackdrop) socialBackdrop.hidden = false;
+}
+
+function closeProfileDrawer() {
+  if (!profileDrawer) return;
+  profileDrawer.classList.remove("is-open");
+  profileDrawer.setAttribute("aria-hidden", "true");
+  if (profileAvatarButton) profileAvatarButton.setAttribute("aria-expanded", "false");
+  syncSharedBackdrop();
+}
+
+function syncSharedBackdrop() {
+  if (!socialBackdrop) return;
+  const socialOpen = Boolean(socialDrawer && socialDrawer.classList.contains("is-open"));
+  const profileOpen = Boolean(profileDrawer && profileDrawer.classList.contains("is-open"));
+  socialBackdrop.hidden = !socialOpen && !profileOpen;
 }
 
 function initSocialPanel() {
@@ -2490,7 +2519,12 @@ function initSocialPanel() {
 
   if (socialToggleButton) socialToggleButton.addEventListener("click", openSocialDrawer);
   if (socialCloseButton) socialCloseButton.addEventListener("click", closeSocialDrawer);
-  if (socialBackdrop) socialBackdrop.addEventListener("click", closeSocialDrawer);
+  if (socialBackdrop) {
+    socialBackdrop.addEventListener("click", () => {
+      closeSocialDrawer();
+      closeProfileDrawer();
+    });
+  }
 
   if (friendAddButton) {
     friendAddButton.addEventListener("click", () => {
@@ -2504,6 +2538,12 @@ function initSocialPanel() {
       rerenderCompetitiveViews();
     });
   }
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return;
+    closeSocialDrawer();
+    closeProfileDrawer();
+  });
 }
 
 async function init() {

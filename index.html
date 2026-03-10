@@ -30,8 +30,7 @@
     </nav>
 
     <div class="topbar-actions">
-      <button id="dev-reset-btn" class="btn btn-outline" type="button" title="Reiniciar partida diaria (Dev)"
-        style="padding: 6px 10px; font-size: 1.1rem; border-color: rgba(99, 102, 241, 0.4);">🔄</button>
+      <button id="dev-reset-btn" class="btn btn-outline topbar-utility-btn" type="button" title="Reiniciar partida diaria (Dev)">🔄</button>
       <button id="social-toggle" class="btn-social-pill" type="button">Social</button>
       <div class="profile-menu-wrap">
         <button id="profile-avatar-btn" class="profile-pill-btn" type="button" aria-expanded="false"
@@ -51,8 +50,13 @@
           <span id="header-profile-name" class="profile-name">You</span>
         </button>
         <div id="profile-dropdown" class="profile-dropdown settings-menu" aria-hidden="true">
-          <div class="pd-header" style="justify-content: center; padding: 12px;">
-            <h4 style="margin: 0; color: var(--ink); font-size: 1.1rem;">Ajustes</h4>
+          <div class="pd-header">
+            <div>
+              <span class="panel-kicker">Settings panel</span>
+              <h4 class="pd-title">Ajustes</h4>
+              <p class="pd-subcopy">Preferencias rápidas y nombre de jugador en un solo panel.</p>
+            </div>
+            <button id="profile-close" class="btn btn-outline panel-close-btn" type="button">Cerrar</button>
           </div>
           <hr class="pd-divider" />
           <label class="pd-row">
@@ -65,14 +69,12 @@
             <select id="top-lang-select" class="pd-theme-select" aria-label="Idioma seleccion"></select>
           </label>
           <hr class="pd-divider" />
-          <div class="pd-row-vert" style="padding: 10px 16px;">
-            <label for="profile-name-input-menu" class="pd-row-label" style="display: block; margin-bottom: 8px;">Nombre
+          <div class="pd-row-vert">
+            <label for="profile-name-input-menu" class="pd-row-label">Nombre
               de jugador</label>
-            <div class="profile-edit-row" style="display: flex; gap: 8px;">
-              <input id="profile-name-input-menu" type="text" maxlength="18" placeholder="Tu nombre"
-                style="flex: 1; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--line); font-size: 0.9rem;" />
-              <button id="profile-save-menu" class="btn btn-outline" type="button"
-                style="padding: 6px 12px; font-size: 0.9rem;">Guardar</button>
+            <div class="profile-edit-row">
+              <input id="profile-name-input-menu" type="text" maxlength="18" placeholder="Tu nombre" />
+              <button id="profile-save-menu" class="btn btn-outline" type="button">Guardar</button>
             </div>
           </div>
           <hr class="pd-divider" />
@@ -83,10 +85,13 @@
   </header>
   <aside id="social-drawer" class="social-drawer" aria-hidden="true">
     <div class="social-drawer-head">
-      <h3>Social</h3>
-      <button id="social-close" class="btn btn-outline" type="button">Cerrar</button>
+      <div>
+        <span class="panel-kicker">Social panel</span>
+        <h3>Social</h3>
+        <p class="panel-sub">Gestiona amigos y comparativas sin salir de la partida.</p>
+      </div>
+      <button id="social-close" class="btn btn-outline panel-close-btn" type="button">Cerrar</button>
     </div>
-    <p class="panel-sub" style="display: none;"></p>
     <div class="profile-row">
       <input id="friend-name-input" type="text" maxlength="18" placeholder="Nombre de amigo" />
       <button id="friend-add" class="btn btn-outline" type="button">Agregar</button>

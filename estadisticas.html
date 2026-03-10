@@ -47,8 +47,13 @@
           <span id="header-profile-name" class="profile-name">You</span>
         </button>
         <div id="profile-dropdown" class="profile-dropdown settings-menu" aria-hidden="true">
-          <div class="pd-header" style="justify-content: center; padding: 12px;">
-            <h4 style="margin: 0; color: var(--ink); font-size: 1.1rem;">Ajustes</h4>
+          <div class="pd-header">
+            <div>
+              <span class="panel-kicker">Settings panel</span>
+              <h4 class="pd-title">Ajustes</h4>
+              <p class="pd-subcopy">Preferencias rápidas y nombre de jugador en un solo panel.</p>
+            </div>
+            <button id="profile-close" class="btn btn-outline panel-close-btn" type="button">Cerrar</button>
           </div>
           <hr class="pd-divider" />
           <label class="pd-row">
@@ -61,14 +66,12 @@
             <select id="top-lang-select" class="pd-theme-select" aria-label="Idioma seleccion"></select>
           </label>
           <hr class="pd-divider" />
-          <div class="pd-row-vert" style="padding: 10px 16px;">
-            <label for="profile-name-input-menu" class="pd-row-label" style="display: block; margin-bottom: 8px;">Nombre
+          <div class="pd-row-vert">
+            <label for="profile-name-input-menu" class="pd-row-label">Nombre
               de jugador</label>
-            <div class="profile-edit-row" style="display: flex; gap: 8px;">
-              <input id="profile-name-input-menu" type="text" maxlength="18" placeholder="Tu nombre"
-                style="flex: 1; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--line); font-size: 0.9rem;" />
-              <button id="profile-save-menu" class="btn btn-outline" type="button"
-                style="padding: 6px 12px; font-size: 0.9rem;">Guardar</button>
+            <div class="profile-edit-row">
+              <input id="profile-name-input-menu" type="text" maxlength="18" placeholder="Tu nombre" />
+              <button id="profile-save-menu" class="btn btn-outline" type="button">Guardar</button>
             </div>
           </div>
         </div>
@@ -78,8 +81,12 @@
 
   <aside id="social-drawer" class="social-drawer" aria-hidden="true">
     <div class="social-drawer-head">
-      <h3>Social</h3>
-      <button id="social-close" class="btn btn-outline" type="button">Cerrar</button>
+      <div>
+        <span class="panel-kicker">Social panel</span>
+        <h3>Social</h3>
+        <p class="panel-sub">Gestiona amigos y comparativas sin salir de la partida.</p>
+      </div>
+      <button id="social-close" class="btn btn-outline panel-close-btn" type="button">Cerrar</button>
     </div>
     <div class="profile-row">
       <input id="friend-name-input" type="text" maxlength="18" placeholder="Nombre de amigo" />
@@ -91,25 +98,57 @@
 
   <main>
     <section id="history" class="panel stats-page">
+      <div class="stats-shell-head">
+        <span class="stats-shell-kicker">Rendimiento</span>
+        <h1 class="stats-shell-title">Estadísticas</h1>
+        <p class="stats-shell-copy">Tu actividad reciente, progresión y mejores marcas en una vista más compacta y clara.</p>
+      </div>
 
-      <div id="weekly-summary" class="summary-card"></div>
+      <div class="stats-block-head">
+        <span class="stats-block-index">01</span>
+        <div>
+          <h3>Resumen semanal</h3>
+          <p>Lectura rápida de tu estado actual y del reto activo.</p>
+        </div>
+      </div>
+      <div id="weekly-summary" class="summary-card stats-brief"></div>
 
-      <div class="history-mid-row" style="grid-template-columns: 1fr;">
-        <article class="history-mid-card">
+      <div class="stats-block-head">
+        <span class="stats-block-index">02</span>
+        <div>
+          <h3>Consistencia</h3>
+          <p>Actividad reciente y señales de continuidad.</p>
+        </div>
+      </div>
+      <div class="history-mid-row stats-single-col">
+        <article class="history-mid-card stats-heat-card">
           <h4>Actividad 14 días</h4>
-          <div id="consistency-heatmap" class="consistency-heatmap" aria-label="Calendario de consistencia"
-            style="justify-content: center;"></div>
+          <div id="consistency-heatmap" class="consistency-heatmap stats-heatmap" aria-label="Calendario de consistencia"></div>
         </article>
       </div>
 
-      <div id="history-insights-row" class="history-insights-row" style="grid-template-columns: 1fr;">
-        <article id="achievements-card" class="history-insight-card">
+      <div class="stats-block-head">
+        <span class="stats-block-index">03</span>
+        <div>
+          <h3>Logros</h3>
+          <p>Insignias y avances que ya has desbloqueado.</p>
+        </div>
+      </div>
+      <div id="history-insights-row" class="history-insights-row stats-single-col">
+        <article id="achievements-card" class="history-insight-card stats-achievement-card">
           <h4>Logros Obtenidos</h4>
           <div id="achievements" class="achievements"></div>
         </article>
       </div>
 
-      <div class="table-wrap" style="margin-bottom: 20px;">
+      <div class="stats-block-head">
+        <span class="stats-block-index">04</span>
+        <div>
+          <h3>Récords</h3>
+          <p>Tus mejores resultados por quiz.</p>
+        </div>
+      </div>
+      <div class="table-wrap stats-records-wrap">
         <table class="leaderboard records-table" aria-label="Records personales">
           <thead>
             <tr>
@@ -121,6 +160,14 @@
           </thead>
           <tbody id="personal-records"></tbody>
         </table>
+      </div>
+
+      <div class="stats-block-head">
+        <span class="stats-block-index">05</span>
+        <div>
+          <h3>Historial</h3>
+          <p>Últimas partidas guardadas en tu perfil local.</p>
+        </div>
       </div>
       <ul id="history-list" class="history-list"></ul>
     </section>
