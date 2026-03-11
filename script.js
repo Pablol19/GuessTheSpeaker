@@ -246,6 +246,17 @@ const friendAddButton = document.querySelector("#friend-add");
 const friendsListNode = document.querySelector("#friends-list");
 const topThemeSelect = document.querySelector("#top-theme-select");
 const topLangSelect = document.querySelector("#top-lang-select");
+const socialProfileCardNode = document.querySelector("#social-profile-card");
+const socialSpotlightStatsNode = document.querySelector("#social-spotlight-stats");
+const socialRelationsNode = document.querySelector("#social-relations");
+const socialInviteCodeNode = document.querySelector("#social-invite-code");
+const socialBadgesNode = document.querySelector("#social-badges");
+const socialRankingSummaryNode = document.querySelector("#social-ranking-summary");
+const socialRankingTableNode = document.querySelector("#social-ranking-table");
+const socialChallengesNode = document.querySelector("#social-challenges");
+const socialCompareGridNode = document.querySelector("#social-compare-grid");
+const socialFeedNode = document.querySelector("#social-feed");
+const socialMovementNode = document.querySelector("#social-movement");
 
 const statStreak = document.querySelector("#stat-streak");
 const statBestStreak = document.querySelector("#stat-best-streak");
@@ -257,6 +268,15 @@ const statXp = document.querySelector("#stat-xp");
 const streakFireNode = document.querySelector("#streak-fire");
 const streakStatCardNode = document.querySelector("#streak-stat-card");
 const xpBarNode = document.querySelector("#xp-bar");
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
 
 const appState = {
   quizId: DEFAULT_QUIZ_ID,
@@ -1465,6 +1485,7 @@ function finishDailyMatch() {
   renderInsights();
   renderHistory();
   renderWeeklyLeague();
+  renderSocialHub();
   setTimeout(() => renderHomePrimarySection(true), 1400);
 }
 
@@ -1958,6 +1979,433 @@ function loadProfileForQuiz(quizId) {
   }
 }
 
+function getEntryPoints(entry) {
+  if (!entry) return 0;
+  return entry.score * 10 + (entry.score === entry.total ? 20 : 0);
+}
+
+function getCategoryQuizIds(categoryId) {
+  const category = QUIZ_CATALOG.categories.find((item) => item.id === categoryId);
+  if (!category) return [];
+  return category.quizzes.flatMap((quiz) => (quiz.isGroup ? quiz.levels.map((level) => level.id) : [quiz.id]));
+}
+
+function getMyCategorySnapshot(categoryId) {
+  const quizIds = getCategoryQuizIds(categoryId);
+  const entries = quizIds.flatMap((quizId) => loadProfileForQuiz(quizId).history || []);
+  if (!entries.length) {
+    return { avg: 0, matches: 0, best: 0, bestTime: 0 };
+  }
+
+  const totalPercent = entries.reduce((acc, entry) => acc + (entry.percent || 0), 0);
+  const bestEntry = entries.reduce((acc, entry) => (entry.score > acc.score ? entry : acc), entries[0]);
+  const bestTimeEntry = entries.reduce((acc, entry) => (entry.durationSec < acc.durationSec ? entry : acc), entries[0]);
+
+  return {
+    avg: Math.round(totalPercent / entries.length),
+    matches: entries.length,
+    best: bestEntry.score || 0,
+    bestTime: bestTimeEntry.durationSec || 0
+  };
+}
+
+function getFriendCategorySnapshot(name, categoryId) {
+  const seed = hashString(`${appState.todayKey}:${name}:${categoryId}:category`);
+  const matches = 2 + (seed % 8);
+  const avg = 52 + (seed % 39);
+  const best = 5 + (seed % 6);
+  const bestTime = 42 + (seed % 120);
+  return { avg, matches, best, bestTime };
+}
+
+function getFriendSocialSnapshot(name) {
+  const safeName = String(name || "Friend").trim() || "Friend";
+  const seed = hashString(`${appState.todayKey}:${safeName}:social`);
+  const level = 2 + (seed % 17);
+  const xp = level * 100 + (seed % 100);
+  const tier = getLeagueTier(level);
+  const streakCurrent = 1 + (seed % 16);
+  const weeklyPoints = 180 + (seed % 480);
+  const movement = (seed % 7) - 3;
+  const accuracy = 54 + (seed % 39);
+  const bestScore = 5 + (seed % 6);
+  const badgesPool = [
+    "Perfect run",
+    "Hito de racha 7",
+    "Meta semanal 5/7",
+    "Mystery bonus",
+    "Streak Shield activado"
+  ];
+  const badges = badgesPool.filter((_, index) => ((seed >> index) & 1) === 1).slice(0, 3);
+
+  return {
+    name: safeName,
+    level,
+    xp,
+    tier,
+    streakCurrent,
+    weeklyPoints,
+    movement,
+    accuracy,
+    bestScore,
+    badges,
+    categories: Object.fromEntries(
+      QUIZ_CATALOG.categories.map((category) => [category.id, getFriendCategorySnapshot(safeName, category.id)])
+    )
+  };
+}
+
+function getMyWeeklyPoints() {
+  return getThisWeekHistory().reduce((acc, entry) => acc + getEntryPoints(entry), 0);
+}
+
+function buildSocialRankingRows() {
+  const friends = Array.isArray(appState.profile.friends) ? appState.profile.friends : [];
+  const meLevel = getLevelInfo(appState.profile.xp).level;
+  const myAccuracy = getAccuracy();
+  const myBest = appState.profile.history.length
+    ? appState.profile.history.reduce((acc, entry) => (entry.score > acc.score ? entry : acc), appState.profile.history[0]).score
+    : 0;
+
+  const rows = [
+    {
+      name: appState.profile.displayName || "You",
+      isMe: true,
+      tier: getLeagueTier(meLevel),
+      level: meLevel,
+      streakCurrent: appState.profile.streakCurrent || 0,
+      weeklyPoints: getMyWeeklyPoints(),
+      movement: appState.rankDelta || 0,
+      accuracy: myAccuracy,
+      bestScore: myBest
+    },
+    ...friends.map((name) => ({ ...getFriendSocialSnapshot(name), isMe: false }))
+  ];
+
+  rows.sort((a, b) => {
+    if (b.weeklyPoints !== a.weeklyPoints) return b.weeklyPoints - a.weeklyPoints;
+    if (b.bestScore !== a.bestScore) return b.bestScore - a.bestScore;
+    return b.accuracy - a.accuracy;
+  });
+
+  return rows.map((row, index) => ({ ...row, rank: index + 1 }));
+}
+
+function getFavoriteRival(rows) {
+  const me = rows.find((row) => row.isMe);
+  const rivals = rows.filter((row) => !row.isMe);
+  if (!me || !rivals.length) return null;
+  return rivals.reduce((best, row) => {
+    if (!best) return row;
+    const bestDiff = Math.abs(best.weeklyPoints - me.weeklyPoints);
+    const rowDiff = Math.abs(row.weeklyPoints - me.weeklyPoints);
+    return rowDiff < bestDiff ? row : best;
+  }, null);
+}
+
+function getBestStreakPartner(rows) {
+  const friends = rows.filter((row) => !row.isMe);
+  if (!friends.length) return null;
+  return friends.reduce((best, row) => (!best || row.streakCurrent > best.streakCurrent ? row : best), null);
+}
+
+function getInviteCode() {
+  const base = (appState.profile.displayName || "YOU").replace(/\s+/g, "").toUpperCase().slice(0, 6) || "PLAYER";
+  const suffix = String(hashString(`${base}:${appState.profile.xp || 0}`)).slice(0, 4);
+  return `${base}-${suffix}`;
+}
+
+function bindCopyActions(scope = document) {
+  scope.querySelectorAll("[data-copy-text]").forEach((button) => {
+    if (button.dataset.copyBound === "1") return;
+    button.dataset.copyBound = "1";
+    button.addEventListener("click", async () => {
+      const original = button.textContent;
+      try {
+        await navigator.clipboard.writeText(button.getAttribute("data-copy-text") || "");
+        button.textContent = "Copiado";
+      } catch (error) {
+        button.textContent = "No disponible";
+      }
+      setTimeout(() => {
+        button.textContent = original;
+      }, 1200);
+    });
+  });
+}
+
+function renderSocialProfile(rows) {
+  if (!socialProfileCardNode && !socialSpotlightStatsNode && !socialRelationsNode && !socialBadgesNode) return;
+
+  const meLevel = getLevelInfo(appState.profile.xp).level;
+  const tier = getLeagueTier(meLevel);
+  const accuracy = getAccuracy();
+  const meRow = rows.find((row) => row.isMe);
+  const bestRank = (appState.profile.history || [])
+    .filter((entry) => typeof entry.rank === "number")
+    .reduce((best, entry) => (best === null || entry.rank < best ? entry.rank : best), null);
+  const favoriteRival = getFavoriteRival(rows);
+  const bestStreakPartner = getBestStreakPartner(rows);
+  const inviteCode = getInviteCode();
+
+  if (socialProfileCardNode) {
+    socialProfileCardNode.innerHTML = `
+      <div class="social-profile-card-head">
+        <div class="social-profile-avatar-wrap">
+          <span class="social-profile-tier">${tier.icon}</span>
+          <svg class="social-profile-avatar" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <circle cx="18" cy="18" r="18" fill="url(#social-grad)" />
+            <circle cx="18" cy="14" r="6" fill="#fff" opacity="0.85" />
+            <path d="M6 32c0-6.627 5.373-12 12-12s12 5.373 12 12" fill="#fff" opacity="0.85" />
+            <defs>
+              <linearGradient id="social-grad" x1="0" y1="0" x2="36" y2="36">
+                <stop stop-color="#e2e8f0" />
+                <stop offset="1" stop-color="#94a3b8" />
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <div class="social-profile-copy">
+          <span class="panel-kicker">Perfil social</span>
+          <h2>${escapeHtml(appState.profile.displayName || "You")}</h2>
+          <div class="social-profile-rankline">
+            <span class="social-inline-chip">${tier.name}</span>
+            <span class="social-inline-chip">Nivel ${meLevel}</span>
+            <span class="social-inline-chip">${accuracy}% precision</span>
+          </div>
+          <p>${favoriteRival ? `Rival: ${escapeHtml(favoriteRival.name)}.` : "Sin rival aun."}</p>
+        </div>
+      </div>
+      <div class="social-profile-meta">
+        <span class="metric-pill">Racha: <strong>${appState.profile.streakCurrent || 0}</strong></span>
+        <span class="metric-pill">Top personal: <strong>${bestRank ? `#${bestRank}` : "--"}</strong></span>
+        <span class="metric-pill">Grupo: <strong>${rows.filter((row) => !row.isMe).length}</strong></span>
+      </div>
+    `;
+  }
+
+  if (socialSpotlightStatsNode) {
+    const focusCopy = favoriteRival
+      ? `${favoriteRival.name} está a tiro.`
+      : "Añade amigos y activa la liga.";
+    socialSpotlightStatsNode.innerHTML = `
+      <span class="panel-kicker">Foco de hoy</span>
+      <h3>${favoriteRival ? `Supera a ${escapeHtml(favoriteRival.name)}` : "Activa tu circulo social"}</h3>
+      <p>${focusCopy}</p>
+      <div class="social-spotlight-metrics">
+        <span class="metric-pill">Liga: <strong>${meRow ? `#${meRow.rank}` : "--"}</strong></span>
+        <span class="metric-pill">Puntos: <strong>${getMyWeeklyPoints()}</strong></span>
+        <span class="metric-pill">Δ: <strong>${appState.rankDelta > 0 ? `+${appState.rankDelta}` : appState.rankDelta || 0}</strong></span>
+      </div>
+    `;
+  }
+
+  if (socialRelationsNode) {
+    socialRelationsNode.innerHTML = `
+      <div class="social-relation-line">
+        <span>Favorite rival</span>
+        <strong>${favoriteRival ? escapeHtml(favoriteRival.name) : "Sin rival"}</strong>
+        <em>${favoriteRival ? `${Math.abs(favoriteRival.weeklyPoints - getMyWeeklyPoints())} pts` : "Sin datos"}</em>
+      </div>
+      <div class="social-relation-line">
+        <span>Best streak partner</span>
+        <strong>${bestStreakPartner ? escapeHtml(bestStreakPartner.name) : "Sin partner"}</strong>
+        <em>${bestStreakPartner ? `${bestStreakPartner.streakCurrent} dias` : "Sin datos"}</em>
+      </div>
+    `;
+  }
+
+  if (socialInviteCodeNode) {
+    const shareText = `Unete a mi perfil social en GuessTheSpeaker con el codigo ${inviteCode}`;
+    socialInviteCodeNode.innerHTML = `
+      <span class="panel-kicker">Invitacion</span>
+      <strong>${inviteCode}</strong>
+      <button class="btn btn-outline" type="button" data-copy-text="${escapeHtml(shareText)}">Copiar codigo</button>
+    `;
+  }
+
+  if (socialBadgesNode) {
+    const badges = (appState.profile.achievements || []).slice(0, 6);
+    socialBadgesNode.innerHTML = badges.length
+      ? badges.map((badge) => `<span class="achievement-badge ${/Perfect|Shield|30/i.test(badge) ? "epic" : /7|14|Meta|Mystery/i.test(badge) ? "rare" : "common"}">${escapeHtml(badge)}</span>`).join("")
+      : '<span class="achievement-badge common social-badge-empty">Sin insignias aun.</span>';
+  }
+}
+
+function renderSocialRanking(rows) {
+  if (socialRankingSummaryNode) {
+    const leader = rows[0];
+    const riser = rows.reduce((best, row) => (!best || row.movement > best.movement ? row : best), null);
+    const friendsOnly = rows.filter((row) => !row.isMe);
+    socialRankingSummaryNode.innerHTML = `
+      <span>Lider: <strong>${leader ? escapeHtml(leader.name) : "--"}</strong></span>
+      <span>Subida: <strong>${riser && riser.movement > 0 ? `${escapeHtml(riser.name)} (+${riser.movement})` : "Sin cambios"}</strong></span>
+      <span>Grupo: <strong>${friendsOnly.length + 1}</strong></span>
+    `;
+  }
+
+  if (socialRankingTableNode) {
+    socialRankingTableNode.innerHTML = rows
+      .map((row) => `
+        <tr${row.isMe ? ' class="me"' : ""}>
+          <td>${row.rank}</td>
+          <td><span class="social-rank-player">${row.tier.icon} ${escapeHtml(row.name)}</span></td>
+          <td>${row.weeklyPoints}</td>
+          <td>${row.accuracy}%</td>
+          <td>${row.movement > 0 ? `+${row.movement}` : row.movement}</td>
+        </tr>
+      `)
+      .join("");
+  }
+}
+
+function renderSocialChallenges(rows) {
+  if (!socialChallengesNode) return;
+  const rivals = rows.filter((row) => !row.isMe);
+  if (!rivals.length) {
+    socialChallengesNode.innerHTML = `
+      <div class="social-challenge-main social-challenge-empty">
+        <span class="panel-kicker">Reto destacado</span>
+        <h3>Sin duelo activo</h3>
+        <p>Agrega amigos para empezar.</p>
+      </div>
+    `;
+    return;
+  }
+
+  const me = rows.find((row) => row.isMe);
+  const targetScore = appState.todayResult ? `${appState.todayResult.score}/10` : `${Math.max(6, Math.min(10, me.bestScore || 7))}/10`;
+  const sentRival = getFavoriteRival(rows) || rivals[0];
+  const receivedRival = rivals[1] || rivals[0];
+  const revengeRival = rivals.find((row) => row.movement > 0) || sentRival;
+
+  const sentText = `${appState.profile.displayName || "You"} te reta a superar ${targetScore} en ${appState.todayResult ? `${appState.todayResult.durationSec}s` : "60s"} en GuessTheSpeaker.`;
+  const receivedText = `${receivedRival.name} quiere que superes ${receivedRival.bestScore}/10 en ${40 + receivedRival.rank * 6}s.`;
+  const revengeText = `${revengeRival.name} te adelanto en la liga privada. Recupera ${Math.max(12, revengeRival.weeklyPoints - me.weeklyPoints + 20)} puntos hoy.`;
+
+  socialChallengesNode.innerHTML = `
+    <div class="social-challenge-main">
+      <span class="panel-kicker">Reto destacado</span>
+      <h3>Supera a ${escapeHtml(sentRival.name)}</h3>
+      <p><strong>${targetScore}</strong> antes de <strong>${appState.todayResult ? `${appState.todayResult.durationSec}s` : "60s"}</strong>.</p>
+      <button class="btn btn-outline" type="button" data-copy-text="${escapeHtml(sentText)}">Copiar reto</button>
+    </div>
+    <div class="social-challenge-side">
+      <div class="social-challenge-note">
+        <span>Reto recibido</span>
+        <p>${receivedText}</p>
+      </div>
+      <div class="social-challenge-note">
+        <span>Revenge match</span>
+        <p>${revengeText}</p>
+      </div>
+    </div>
+  `;
+}
+
+function renderSocialCategoryCompare(rows) {
+  if (!socialCompareGridNode) return;
+  const friends = rows.filter((row) => !row.isMe);
+
+  socialCompareGridNode.innerHTML = QUIZ_CATALOG.categories.map((category) => {
+    const meCategory = getMyCategorySnapshot(category.id);
+    const friendLeader = friends.reduce((best, row) => {
+      const snapshot = row.categories ? row.categories[category.id] : getFriendCategorySnapshot(row.name, category.id);
+      if (!best || snapshot.avg > best.snapshot.avg) return { row, snapshot };
+      return best;
+    }, null);
+
+    const leaderIsMe = !friendLeader || meCategory.avg >= friendLeader.snapshot.avg;
+    const leaderName = leaderIsMe ? (appState.profile.displayName || "You") : friendLeader.row.name;
+    const leaderAvg = leaderIsMe ? meCategory.avg : friendLeader.snapshot.avg;
+    const label = leaderIsMe ? "Tú lideras" : `${escapeHtml(friendLeader.row.name)} lidera`;
+
+    return `
+      <div class="social-compare-pill social-compare-${escapeHtml(category.id)}">
+        <span>${escapeHtml(category.name)}</span>
+        <strong>${label}</strong>
+        <em>${leaderAvg ? `${leaderAvg}%` : "Sin datos"}</em>
+      </div>
+    `;
+  }).join("");
+}
+
+function renderSocialFeed(rows) {
+  if (!socialFeedNode) return;
+  const me = rows.find((row) => row.isMe);
+  const rising = rows.filter((row) => !row.isMe && row.movement > 0).slice(0, 2);
+  const activity = [];
+
+  if (appState.todayResult) {
+    activity.push(`Hoy cerraste <strong>${appState.todayResult.score}/${appState.todayResult.total}</strong> en <strong>${appState.todayResult.durationSec}s</strong>.`);
+  } else {
+    activity.push("Tu daily sigue abierto.");
+  }
+
+  rising.forEach((row) => {
+    activity.push(`<strong>${escapeHtml(row.name)}</strong> subio ${row.movement} puesto(s) y ya suma ${row.weeklyPoints} puntos.`);
+  });
+
+  const rival = getFavoriteRival(rows);
+  if (rival) {
+    activity.push(`<strong>${escapeHtml(rival.name)}</strong> a <strong>${Math.abs(rival.weeklyPoints - me.weeklyPoints)}</strong> pts.`);
+  }
+
+  socialFeedNode.innerHTML = activity
+    .slice(0, 3)
+    .map((item) => `<li class="history-entry"><span>${item}</span><span class="date">Social</span></li>`)
+    .join("");
+}
+
+function renderSocialMovement(rows) {
+  if (!socialMovementNode) return;
+  const movers = rows.filter((row) => row.movement !== 0).slice(0, 4);
+  if (!movers.length) {
+    socialMovementNode.innerHTML = '<li class="history-entry is-empty"><span>Sin cambios.</span><span class="date">Estable</span></li>';
+    return;
+  }
+
+  socialMovementNode.innerHTML = movers
+    .slice(0, 3)
+    .map((row) => `
+      <li class="history-entry">
+        <span class="history-entry-score">
+          <strong>${escapeHtml(row.name)}</strong>
+          <em>${row.movement > 0 ? `+${row.movement}` : row.movement} puesto(s)</em>
+        </span>
+        <span class="date">#${row.rank}</span>
+      </li>
+    `)
+    .join("");
+}
+
+function renderSocialHub() {
+  if (
+    !socialProfileCardNode &&
+    !socialSpotlightStatsNode &&
+    !socialRelationsNode &&
+    !socialInviteCodeNode &&
+    !socialBadgesNode &&
+    !socialRankingSummaryNode &&
+    !socialRankingTableNode &&
+    !socialChallengesNode &&
+    !socialCompareGridNode &&
+    !socialFeedNode &&
+    !socialMovementNode
+  ) {
+    return;
+  }
+
+  const rows = buildSocialRankingRows();
+  renderSocialProfile(rows);
+  renderSocialRanking(rows);
+  renderSocialChallenges(rows);
+  renderSocialCategoryCompare(rows);
+  renderSocialFeed(rows);
+  renderSocialMovement(rows);
+  bindCopyActions(document);
+}
+
 function renderPersonalRecords() {
   if (!personalRecordsNode) return;
   const rows = Object.entries(QUIZ_CONFIGS).map(([quizId, config]) => {
@@ -2220,6 +2668,7 @@ function rerenderCompetitiveViews() {
   appState.rankDelta = computeRankDelta(ranking.myRank);
   renderProfileStats(ranking.myRank);
   renderInsights();
+  renderSocialHub();
   if (appState.rankingView === "daily") runRankingSearch();
 }
 
@@ -2314,6 +2763,7 @@ function initProfileControls() {
     appState.profile.displayName = next || "You";
     saveProfile();
     renderProfileChip();
+    renderSocialHub();
     rerenderCompetitiveViews();
     saveBtn.textContent = "Guardado";
     setTimeout(() => {
@@ -2433,7 +2883,7 @@ function renderFriendsList() {
         `
           <li class="friend-card">
             <div class="friend-copy">
-              <span class="friend-name">${name}</span>
+              <span class="friend-name">${escapeHtml(name)}</span>
               <span class="friend-meta">Disponible para comparar ranking.</span>
             </div>
             <button class="btn btn-outline" data-remove-friend="${index}" type="button">Quitar</button>
@@ -2449,6 +2899,7 @@ function renderFriendsList() {
       appState.profile.friends.splice(idx, 1);
       saveProfile();
       renderFriendsList();
+      renderSocialHub();
       rerenderCompetitiveViews();
     });
   });
@@ -2527,7 +2978,7 @@ function initSocialPanel() {
   }
 
   if (friendAddButton) {
-    friendAddButton.addEventListener("click", () => {
+    const commitFriend = () => {
       const value = (friendNameInput ? friendNameInput.value : "").trim().slice(0, 18);
       if (!value) return;
       if (!Array.isArray(appState.profile.friends)) appState.profile.friends = [];
@@ -2535,8 +2986,15 @@ function initSocialPanel() {
       if (friendNameInput) friendNameInput.value = "";
       saveProfile();
       renderFriendsList();
+      renderSocialHub();
       rerenderCompetitiveViews();
-    });
+    };
+    friendAddButton.addEventListener("click", commitFriend);
+    if (friendNameInput) {
+      friendNameInput.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") commitFriend();
+      });
+    }
   }
 
   document.addEventListener("keydown", (event) => {
@@ -2607,6 +3065,7 @@ async function init() {
   renderInsights();
   renderHistory();
   renderWeeklyLeague();
+  renderSocialHub();
   renderHomePrimarySection(false);
   renderExplorePanel();
 

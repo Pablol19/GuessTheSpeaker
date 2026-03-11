@@ -4,7 +4,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>GuessTheSpeaker | Estadisticas</title>
+  <title>GuessTheSpeaker | Social</title>
+  <meta name="description" content="Perfil social, ranking privado, retos y comparativas entre amigos en GuessTheSpeaker." />
   <link rel="stylesheet" href="style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -13,7 +14,7 @@
     rel="stylesheet" />
 </head>
 
-<body>
+<body class="social-page">
   <div class="bg-orb orb-a"></div>
   <div class="bg-orb orb-b"></div>
 
@@ -25,8 +26,8 @@
     <nav class="nav">
       <a href="index.html#daily">Partida diaria</a>
       <a href="explore.html">Jugar</a>
-      <a href="estadisticas.html" class="is-active">Estadisticas</a>
-      <a href="social.html">Social</a>
+      <a href="estadisticas.html">Estadisticas</a>
+      <a href="social.html" class="is-active">Social</a>
     </nav>
     <div class="topbar-actions">
       <div class="profile-menu-wrap">
@@ -67,8 +68,7 @@
           </label>
           <hr class="pd-divider" />
           <div class="pd-row-vert">
-            <label for="profile-name-input-menu" class="pd-row-label">Nombre
-              de jugador</label>
+            <label for="profile-name-input-menu" class="pd-row-label">Nombre de jugador</label>
             <div class="profile-edit-row">
               <input id="profile-name-input-menu" type="text" maxlength="18" placeholder="Tu nombre" />
               <button id="profile-save-menu" class="btn btn-outline" type="button">Guardar</button>
@@ -79,101 +79,82 @@
     </div>
   </header>
 
-  <aside id="social-drawer" class="social-drawer" aria-hidden="true">
-    <div class="social-drawer-head">
-      <div>
-        <span class="panel-kicker">Social panel</span>
-        <h3>Social</h3>
-        <p class="panel-sub">Gestiona amigos y comparativas sin salir de la partida.</p>
-      </div>
-      <button id="social-close" class="btn btn-outline panel-close-btn" type="button">Cerrar</button>
-    </div>
-    <div class="profile-row">
-      <input id="friend-name-input" type="text" maxlength="18" placeholder="Nombre de amigo" />
-      <button id="friend-add" class="btn btn-outline" type="button">Agregar</button>
-    </div>
-    <ul id="friends-list" class="history-list"></ul>
-  </aside>
   <div id="social-backdrop" class="social-backdrop" hidden></div>
 
   <main>
-    <section id="history" class="panel stats-page">
-      <div class="stats-shell-head">
-        <span class="stats-shell-kicker">Rendimiento</span>
-        <h1 class="stats-shell-title">Estadísticas</h1>
-        <p class="stats-shell-copy">Tu actividad reciente, progresión y mejores marcas en una vista más compacta y clara.</p>
-      </div>
-
-      <div class="stats-block-head">
-        <span class="stats-block-index">01</span>
-        <div>
-          <h3>Resumen semanal</h3>
-          <p>Lectura rápida de tu estado actual y del reto activo.</p>
+    <section class="panel social-page-shell">
+      <section class="social-hero social-surface">
+        <div class="social-hero-main">
+          <div class="social-page-copy">
+            <span class="stats-shell-kicker">Social</span>
+            <h1 class="stats-shell-title">Tu liga privada</h1>
+            <p class="stats-shell-copy">Perfil, reto y grupo.</p>
+          </div>
+          <article id="social-profile-card" class="social-profile-panel"></article>
+          <div id="social-badges" class="achievements social-badges-row"></div>
         </div>
-      </div>
-      <div id="weekly-summary" class="summary-card stats-brief"></div>
+        <aside class="social-hero-aside">
+          <div id="social-spotlight-stats" class="social-spotlight-stats"></div>
+          <div id="social-relations" class="social-relations"></div>
+          <div id="social-invite-code" class="social-invite-code"></div>
+        </aside>
+      </section>
 
-      <div class="stats-block-head">
-        <span class="stats-block-index">02</span>
-        <div>
-          <h3>Consistencia</h3>
-          <p>Actividad reciente y señales de continuidad.</p>
+      <section class="social-focus social-surface">
+        <div class="social-section-head">
+          <div>
+            <span class="panel-kicker">Foco</span>
+            <h3>Liga y reto</h3>
+          </div>
+          <div id="social-ranking-summary" class="weekly-league-summary"></div>
         </div>
-      </div>
-      <div class="history-mid-row stats-single-col">
-        <article class="history-mid-card stats-heat-card">
-          <h4>Actividad 14 días</h4>
-          <div id="consistency-heatmap" class="consistency-heatmap stats-heatmap" aria-label="Calendario de consistencia"></div>
-        </article>
-      </div>
+        <div id="social-challenges" class="social-challenges-spotlight"></div>
+        <div class="table-wrap social-table-wrap">
+          <table class="leaderboard records-table social-ranking-table" aria-label="Ranking privado semanal">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Jugador</th>
+                <th>Puntos</th>
+                <th>Precisión</th>
+                <th>Δ</th>
+              </tr>
+            </thead>
+            <tbody id="social-ranking-table"></tbody>
+          </table>
+        </div>
+        <div id="social-compare-grid" class="social-compare-strip"></div>
+      </section>
 
-      <div class="stats-block-head">
-        <span class="stats-block-index">03</span>
-        <div>
-          <h3>Logros</h3>
-          <p>Insignias y avances que ya has desbloqueado.</p>
+      <section class="social-secondary social-surface">
+        <div class="social-section-head">
+          <div>
+            <span class="panel-kicker">Grupo</span>
+            <h3>Amigos</h3>
+          </div>
         </div>
-      </div>
-      <div id="history-insights-row" class="history-insights-row stats-single-col">
-        <article id="achievements-card" class="history-insight-card stats-achievement-card">
-          <h4>Logros Obtenidos</h4>
-          <div id="achievements" class="achievements"></div>
-        </article>
-      </div>
-
-      <div class="stats-block-head">
-        <span class="stats-block-index">04</span>
-        <div>
-          <h3>Récords</h3>
-          <p>Tus mejores resultados por quiz.</p>
+        <div class="social-secondary-grid">
+          <div class="social-secondary-col">
+            <div class="profile-row social-add-row">
+              <input id="friend-name-input" type="text" maxlength="18" placeholder="Nombre de amigo" />
+              <button id="friend-add" class="btn btn-outline" type="button">Agregar</button>
+            </div>
+            <ul id="friends-list" class="history-list social-friends-list"></ul>
+          </div>
+          <div class="social-secondary-col social-secondary-col-right">
+            <div class="social-simple-block">
+              <h4>Actividad</h4>
+              <ul id="social-feed" class="history-list social-lite-list"></ul>
+            </div>
+            <div class="social-simple-block">
+              <h4>Movimientos</h4>
+              <ul id="social-movement" class="history-list social-lite-list"></ul>
+            </div>
+          </div>
         </div>
-      </div>
-      <div class="table-wrap stats-records-wrap">
-        <table class="leaderboard records-table" aria-label="Records personales">
-          <thead>
-            <tr>
-              <th>Quiz</th>
-              <th>Mejor score</th>
-              <th>Mejor tiempo</th>
-              <th>Mejor racha</th>
-            </tr>
-          </thead>
-          <tbody id="personal-records"></tbody>
-        </table>
-      </div>
-
-      <div class="stats-block-head">
-        <span class="stats-block-index">05</span>
-        <div>
-          <h3>Historial</h3>
-          <p>Últimas partidas guardadas en tu perfil local.</p>
-        </div>
-      </div>
-      <ul id="history-list" class="history-list"></ul>
+      </section>
     </section>
   </main>
-
-
 
   <immersive id="quiz-data">
     {
